@@ -9,12 +9,12 @@
 </style>
 
 <div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
-
-    This friendly message is coming from:
+    <h1>Technologies</h1>
     <ul>
-        <li>Your controller at <code><a href="{{ 'C:/Users/smile/Desktop/Licence/portfolio/src/Controller/TechnologyController.php'|file_link(0) }}">src/Controller/TechnologyController.php</a></code></li>
-        <li>Your template at <code><a href="{{ 'C:/Users/smile/Desktop/Licence/portfolio/templates/technology/index.html.twig'|file_link(0) }}">templates/technology/index.html.twig</a></code></li>
+        {% for technology in technologies %}
+            <li><a href="{{ path('technology_edit', {'slug': technology.slug}) }}">{{ technology.name }}</a></li>
+            <li><a href="{{ path('technology_delete', {'id': technology.id}) }}">Supprimer</a></li>
+        {% endfor %}    
     </ul>
 </div>
 {% endblock %}

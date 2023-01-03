@@ -1,0 +1,70 @@
+{{ form_start(form) }}
+
+
+    <ul class="screens"
+        data-index="{{ form.screens|length > 0 ? form.screens|last.vars.name + 1 : 0 }}"
+        data-prototype="{{ form_widget(form.screens.vars.prototype)|e('html_attr') }}">
+        {% for screen in form.screens %}
+            <li>{{ form_row(screen.image) }}</li>
+        {% endfor %}
+    </ul>
+
+    <ul class="docs"
+        data-index="{{ form.docs|length > 0 ? form.docs|last.vars.name + 1 : 0 }}"
+        data-prototype="{{ form_widget(form.docs.vars.prototype)|e('html_attr') }}">
+        {% for doc in form.docs %}
+            <li>{{ form_row(doc.document) }}</li>
+        {% endfor %}
+    </ul>
+
+    <button type="button" class="add_item_link" data-collection-holder-class="screens">Add a screen</button>
+    <button type="button" class="add_item_link" data-collection-holder-class="docs">Add a doc</button>
+{{ form_end(form) }}
+
+<script>
+const addTagFormDeleteLink = (item) => {
+    const removeFormButton = document.createElement('button');
+    removeFormButton.innerText = 'Delete this tag';
+
+    item.append(removeFormButton);
+
+    removeFormButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        // remove the li for the tag form
+        item.remove();
+    });
+}
+
+const addFormToCollection = (e) => {
+  const collectionHolder = document.querySelector('.' + e.currentTarget.dataset.collectionHolderClass);
+
+  const item = document.createElement('li');
+
+  item.innerHTML = collectionHolder
+    .dataset
+    .prototype
+    .replace(
+      /__name__/g,
+      collectionHolder.dataset.index
+    );
+
+  collectionHolder.appendChild(item);
+
+  collectionHolder.dataset.index++;
+
+  addTagFormDeleteLink(item);
+};
+
+document
+  .querySelectorAll('.add_item_link')
+  .forEach(btn => {
+      btn.addEventListener("click", addFormToCollection)
+  });
+
+  document
+    .querySelectorAll('ul.tags li')
+    .forEach((tag) => {
+        addTagFormDeleteLink(tag)
+    })
+
+</script>

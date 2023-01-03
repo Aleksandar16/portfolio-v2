@@ -31,10 +31,10 @@ class Project
     #[ORM\ManyToMany(targetEntity: Technology::class, inversedBy: 'projects')]
     private Collection $technologies;
 
-    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Screen::class)]
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Screen::class, cascade: ['persist'])]
     private Collection $screens;
 
-    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Doc::class)]
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Doc::class, cascade: ['persist'])]
     private Collection $docs;
 
     public function __construct()

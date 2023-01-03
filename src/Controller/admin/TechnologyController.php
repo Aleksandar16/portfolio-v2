@@ -9,20 +9,26 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/technologies', name: 'technology_')]
 class TechnologyController extends AbstractController
 {
     #[Route('/', name: 'index')]
-    public function index(): Response
+    public function index(ManagerRegistry $doctrine): Response
     {
+        $entityManager = $doctrine->getManager();
+        $technologies = $entityManager->getRepository(Technology::class)->findAll();
+
         return $this->render('admin/technology/index.html.twig', [
-            'controller_name' => 'TechnologyController',
+            'technologies' => $technologies,
         ]);
     }
 
     #[Route('/ajouter', name: 'create')]
-    public function createTechnology(Request $request, ManagerRegistry $doctrine): Response
+    public function create(Request $request, ManagerRegistry $doctrine, SluggerInterface $slugger): Response
     {
         $technology = new Technology();
 
@@ -34,6 +40,24 @@ class TechnologyController extends AbstractController
             $entityManager = $doctrine->getManager();
 
             $technology = $form->getData();
+
+            $logo = $form->get('logo')->getData();
+
+            if ($logo) {
+                $originalFilename = pathinfo($logo->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$logo->guessExtension();
+
+                try {
+                    $logo->move(
+                        $this->getParameter('logo_directory'),
+                        $newFilename
+                    );
+                } catch (FileException $e) {
+                }
+
+                $technology->setLogo($newFilename);
+            }
 
             $entityManager->persist($technology);
 
@@ -48,7 +72,7 @@ class TechnologyController extends AbstractController
     }
 
     #[Route('/modifier/{slug}', name: 'edit')]
-    public function update(Request $request, ManagerRegistry $doctrine, Technology $technology, string $slug): Response
+    public function update(Request $request, ManagerRegistry $doctrine, Technology $technology, string $slug, SluggerInterface $slugger): Response
     {
         $entityManager = $doctrine->getManager();
         $technology = $entityManager->getRepository(Technology::class)->findOneBy(array('slug' => $slug));
@@ -68,6 +92,24 @@ class TechnologyController extends AbstractController
 
             $technology = $form->getData();
 
+            $logo = $form->get('logo')->getData();
+
+            if ($logo) {
+                $originalFilename = pathinfo($logo->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$logo->guessExtension();
+
+                try {
+                    $logo->move(
+                        $this->getParameter('logo_directory'),
+                        $newFilename
+                    );
+                } catch (FileException $e) {
+                }
+
+                $technology->setLogo($newFilename);
+            }
+
             $entityManager->persist($technology);
 
             $entityManager->flush();
@@ -78,5 +120,15 @@ class TechnologyController extends AbstractController
         return $this->render('admin/technology/edit.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    #[Route('/supprimer/{id}', name: 'delete')]
+    public function delete(Request $request, ManagerRegistry $doctrine, int $id): Response
+    {
+        $entityManager = $doctrine->getManager();
+        $technology = $entityManager->getRepository(Technology::class)->find($id);
+        $entityManager->remove($technology);
+        $entityManager->flush();
+        return $this->redirectToRoute('technology_index');
     }
 }

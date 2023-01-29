@@ -6,6 +6,7 @@ use App\Entity\Project;
 use App\Entity\Technology;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
@@ -31,19 +32,15 @@ class ProjectType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
             ])
-            ->add('screens', CollectionType::class, [
-                'entry_type' => ScreenType::class,
-                'entry_options' => ['label' => false],
-                'by_reference' => false,
-                'allow_delete' => true,
-                'allow_add' => true,
+            ->add('screens', FileType::class,[
+                'multiple' => true,
+                'mapped' => false,
+                'required' => false
             ])
-            ->add('docs', CollectionType::class, [
-                'entry_type' => DocType::class,
-                'entry_options' => ['label' => false],
-                'by_reference' => false,
-                'allow_delete' => true,
-                'allow_add' => true,
+            ->add('docs', FileType::class,[
+                'multiple' => true,
+                'mapped' => false,
+                'required' => false
             ])
             ->add('ajouter', SubmitType::class)
         ;

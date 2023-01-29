@@ -1,0 +1,21 @@
+{{ form_start(form) }}
+    {{ form_widget(form) }}
+
+	{% if app.request.attributes.get('_route') == 'project_edit' %}
+        <h2>Images</h2>
+        {% for image in screens %}
+            <div>
+                <img src="{{ asset('/uploads/screens/'~image.image) }}" alt="" width="150">
+
+                <a href="{{ path('project_delete_image', {id: image.id})}}">Supprimer</a>
+            </div>
+        {% endfor %}
+        <h2>Docs</h2>
+        {% for doc in docs %}
+            <div>
+                <img src="{{ asset('/uploads/docs/'~doc.document) }}" alt="" width="150">
+                <a href="{{ path('project_delete_doc', {id: doc.id})}}">Supprimer</a>
+            </div>
+        {% endfor %}
+    {% endif %}
+{{ form_end(form) }}

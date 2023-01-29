@@ -72,7 +72,7 @@ class TechnologyController extends AbstractController
     }
 
     #[Route('/modifier/{slug}', name: 'edit')]
-    public function update(Request $request, ManagerRegistry $doctrine, Technology $technology, string $slug, SluggerInterface $slugger): Response
+    public function update(Request $request, ManagerRegistry $doctrine, string $slug, SluggerInterface $slugger): Response
     {
         $entityManager = $doctrine->getManager();
         $technology = $entityManager->getRepository(Technology::class)->findOneBy(array('slug' => $slug));

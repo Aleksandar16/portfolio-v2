@@ -2,20 +2,18 @@
 
 namespace App\Controller\admin;
 
+use App\Entity\Image;
 use App\Entity\Project;
 use App\Entity\Screen;
 use App\Entity\Doc;
 use App\Form\ProjectType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
-use Doctrine\Common\Collections\ArrayCollection;
 
 #[Route('/admin/projets', name: 'project_')]
 class ProjectController extends AbstractController
@@ -32,7 +30,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/ajouter', name: 'create')]
-    public function create(Request $request, ManagerRegistry $doctrine): Response
+    public function create(Request $request, ManagerRegistry $doctrine, SluggerInterface $slugger): Response
     {
         $project = new Project();
 
@@ -41,7 +39,8 @@ class ProjectController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-
+            $entityManager = $doctrine->getManager();
+            $project = $form->getData();
             $images = $form->get('screens')->getData();
 
             // On boucle sur les images
@@ -80,8 +79,18 @@ class ProjectController extends AbstractController
                 $project->addDoc($document);
             }
 
-            $entityManager = $doctrine->getManager();
             $entityManager->persist($project);
+            foreach ($form->get('images') as $formChild) {
+                $image = new Image;
+
+                $uploadedImages = $formChild->get('name')->getData();
+                $uploadedImage = $uploadedImages[0];
+                $newFileName = $this->handleFile($slugger, $uploadedImage);
+                $image->setName($newFileName);
+                $image->setProject($project);
+                $entityManager->persist($image);
+            }
+
             $entityManager->flush();
 
             return $this->redirectToRoute('project_index');
@@ -90,6 +99,21 @@ class ProjectController extends AbstractController
         return $this->render('admin/project/new.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    public function handleFile($slugger, $image)
+    {
+
+        $extension = '.' . $image->guessExtension();
+        $originalFileName = $slugger->slug($image->getClientOriginalName());
+        $newFileName = $originalFileName . uniqid() . $extension;
+        try {
+            $image->move($this->getParameter('image_directory'), $newFileName);
+        } catch (FileException $fe) {
+            //throw $th;
+        }
+
+        return $newFileName;
     }
 
     #[Route('/modifier/{slug}', name: 'edit')]

@@ -37,11 +37,15 @@ class Project
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Doc::class, cascade: ['persist'])]
     private Collection $docs;
 
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Image::class, cascade: ['persist'])]
+    private Collection $images;
+
     public function __construct()
     {
         $this->technologies = new ArrayCollection();
         $this->screens = new ArrayCollection();
         $this->docs = new ArrayCollection();
+        $this->images = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -175,6 +179,36 @@ class Project
             // set the owning side to null (unless already changed)
             if ($doc->getProject() === $this) {
                 $doc->setProject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Image>
+     */
+    public function getImages(): Collection
+    {
+        return $this->images;
+    }
+
+    public function addImage(Image $image): self
+    {
+        if (!$this->images->contains($image)) {
+            $this->images->add($image);
+            $image->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImage(Image $image): self
+    {
+        if ($this->images->removeElement($image)) {
+            // set the owning side to null (unless already changed)
+            if ($image->getProject() === $this) {
+                $image->setProject(null);
             }
         }
 

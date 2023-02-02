@@ -6,12 +6,13 @@ use App\Entity\Project;
 use App\Entity\Technology;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Validator\Constraints\Valid;
 
 class ProjectType extends AbstractType
 {
@@ -41,6 +42,13 @@ class ProjectType extends AbstractType
                 'multiple' => true,
                 'mapped' => false,
                 'required' => false
+            ])
+            ->add('images', CollectionType::class, [
+                'entry_type' => ImageType::class,
+                'entry_options' => ['label' => false],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false
             ])
             ->add('ajouter', SubmitType::class)
         ;

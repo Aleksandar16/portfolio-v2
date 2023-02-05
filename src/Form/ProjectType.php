@@ -2,6 +2,7 @@
 
 namespace App\Form;
 
+use App\Entity\Doc;
 use App\Entity\Project;
 use App\Entity\Technology;
 use Doctrine\ORM\EntityRepository;
@@ -32,15 +33,12 @@ class ProjectType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
             ])
-            ->add('screens', FileType::class,[
-                'multiple' => true,
-                'mapped' => false,
-                'required' => false
-            ])
-            ->add('docs', FileType::class,[
-                'multiple' => true,
-                'mapped' => false,
-                'required' => false
+            ->add('docs', CollectionType::class, [
+                'entry_type' => DocType::class,
+                'entry_options' => ['label' => false],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
             ])
             ->add('images', CollectionType::class, [
                 'entry_type' => ImageType::class,

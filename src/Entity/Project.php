@@ -31,9 +31,6 @@ class Project
     #[ORM\ManyToMany(targetEntity: Technology::class, inversedBy: 'projects')]
     private Collection $technologies;
 
-    #[ORM\OneToMany(mappedBy: 'project', targetEntity: Screen::class, cascade: ['persist'])]
-    private Collection $screens;
-
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Doc::class, cascade: ['persist'])]
     private Collection $docs;
 
@@ -121,36 +118,6 @@ class Project
     public function removeTechnology(Technology $technology): self
     {
         $this->technologies->removeElement($technology);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Screen>
-     */
-    public function getScreens(): Collection
-    {
-        return $this->screens;
-    }
-
-    public function addScreen(Screen $screen): self
-    {
-        if (!$this->screens->contains($screen)) {
-            $this->screens->add($screen);
-            $screen->setProject($this);
-        }
-
-        return $this;
-    }
-
-    public function removeScreen(Screen $screen): self
-    {
-        if ($this->screens->removeElement($screen)) {
-            // set the owning side to null (unless already changed)
-            if ($screen->getProject() === $this) {
-                $screen->setProject(null);
-            }
-        }
 
         return $this;
     }

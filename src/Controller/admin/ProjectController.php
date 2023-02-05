@@ -3,9 +3,9 @@
 namespace App\Controller\admin;
 
 use App\Entity\Project;
-use App\Entity\Screen;
 use App\Entity\Doc;
 use App\Form\ProjectType;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -40,34 +40,14 @@ class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $doctrine->getManager();
             $project = $form->getData();
-            $images = $form->get('screens')->getData();
 
-            foreach($images as $image){
-                $fichier = md5(uniqid()).'.'.$image->guessExtension();
-
-                $image->move(
-                    $this->getParameter('screen_directory'),
-                    $fichier
-                );
-
-                $img = new Screen();
-                $img->setImage($fichier);
-                $project->addScreen($img);
-            }
-
-            $docs = $form->get('docs')->getData();
-
-            foreach($docs as $doc){
-                $fichier = md5(uniqid()).'.'.$doc->guessExtension();
-
-                $doc->move(
-                    $this->getParameter('doc_directory'),
-                    $fichier
-                );
-
-                $document = new Doc();
-                $document->setDocument($fichier);
-                $project->addDoc($document);
+            $j = 0;
+            foreach ($project->getDocs() as $doc) {
+                $uploadedDocs = $form->get('docs')[$j]->get('document')->getData();
+                ++$j;
+                $uploadedDoc = $uploadedDocs[0];
+                $newFileName = $this->handleFileDoc($slugger, $uploadedDoc);
+                $doc->setDocument($newFileName);
             }
 
             $i = 0;
@@ -75,7 +55,7 @@ class ProjectController extends AbstractController
                 $uploadedImages = $form->get('images')[$i]->get('name')->getData();
                 ++$i;
                 $uploadedImage = $uploadedImages[0];
-                $newFileName = $this->handleFile($slugger, $uploadedImage);
+                $newFileName = $this->handleFileImage($slugger, $uploadedImage);
                 $image->setName($newFileName);
             }
 
@@ -90,7 +70,7 @@ class ProjectController extends AbstractController
         ]);
     }
 
-    public function handleFile($slugger, $image)
+    public function handleFileImage($slugger, $image)
     {
 
         $extension = '.' . $image->guessExtension();
@@ -105,19 +85,43 @@ class ProjectController extends AbstractController
         return $newFileName;
     }
 
+    public function handleFileDoc($slugger, $doc)
+    {
+
+        $extension = '.' . $doc->guessExtension();
+        $originalFileName = $slugger->slug($doc->getClientOriginalName());
+        $newFileName = $originalFileName . uniqid() . $extension;
+        try {
+            $doc->move($this->getParameter('doc_directory'), $newFileName);
+        } catch (FileException $fe) {
+            throw new \Exception("erreur");
+        }
+
+        return $newFileName;
+    }
+
     #[Route('/modifier/{slug}', name: 'edit')]
     public function edit(Request $request, ManagerRegistry $doctrine, string $slug): Response
     {
         $entityManager = $doctrine->getManager();
         $project = $entityManager->getRepository(Project::class)->findOneBy(array('slug' => $slug));
         $slug = $project->getSlug();
-        $images = $project->getScreens();
-        $documents = $project->getDocs();
 
         if (!$project) {
             throw $this->createNotFoundException(
-                'No product found for slug '.$slug
+                'No project found for slug '.$slug
             );
+        }
+
+        $originalImages = new ArrayCollection();
+        $originalDocs = new ArrayCollection();
+
+        foreach ($project->getImages() as $image) {
+            $originalImages->add($image);
+        }
+
+        foreach ($project->getDocs() as $doc) {
+            $originalDocs->add($doc);
         }
 
         $form = $this->createForm(ProjectType::class, $project);
@@ -126,37 +130,23 @@ class ProjectController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $images = $form->get('screens')->getData();
-
-            foreach($images as $image){
-                $fichier = md5(uniqid()).'.'.$image->guessExtension();
-
-                $image->move(
-                    $this->getParameter('screen_directory'),
-                    $fichier
-                );
-
-                $img = new Screen();
-                $img->setImage($fichier);
-                $project->addScreen($img);
-            }
-
-            $docs = $form->get('docs')->getData();
-
-            foreach($docs as $doc){
-                $fichier = md5(uniqid()).'.'.$doc->guessExtension();
-
-                $doc->move(
-                    $this->getParameter('doc_directory'),
-                    $fichier
-                );
-
-                $document = new Doc();
-                $document->setDocument($fichier);
-                $project->addDoc($document);
-            }
-
             $entityManager = $doctrine->getManager();
+
+            foreach ($originalImages as $image) {
+                if (false === $project->getImages()->contains($image)) {
+                    // remove the Task from the Tag
+                    $tag->getTasks()->removeElement($task);
+
+                    // if it was a many-to-one relationship, remove the relationship like this
+                    // $tag->setTask(null);
+
+                    $entityManager->persist($tag);
+
+                    // if you wanted to delete the Tag entirely, you can also do that
+                    // $entityManager->remove($tag);
+                }
+            }
+
             $entityManager->persist($project);
             $entityManager->flush();
 
@@ -165,8 +155,6 @@ class ProjectController extends AbstractController
 
         return $this->render('admin/project/new.html.twig', [
             'form' => $form,
-            'screens' => $images,
-            'docs' => $documents,
         ]);
     }
 

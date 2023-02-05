@@ -2,7 +2,6 @@
 
 namespace App\Controller\admin;
 
-use App\Entity\Image;
 use App\Entity\Project;
 use App\Entity\Screen;
 use App\Entity\Doc;
@@ -43,18 +42,14 @@ class ProjectController extends AbstractController
             $project = $form->getData();
             $images = $form->get('screens')->getData();
 
-            // On boucle sur les images
             foreach($images as $image){
-                // On génère un nouveau nom de fichier
                 $fichier = md5(uniqid()).'.'.$image->guessExtension();
 
-                // On copie le fichier dans le dossier uploads
                 $image->move(
                     $this->getParameter('screen_directory'),
                     $fichier
                 );
 
-                // On crée l'image dans la base de données
                 $img = new Screen();
                 $img->setImage($fichier);
                 $project->addScreen($img);
@@ -62,35 +57,29 @@ class ProjectController extends AbstractController
 
             $docs = $form->get('docs')->getData();
 
-            // On boucle sur les images
             foreach($docs as $doc){
-                // On génère un nouveau nom de fichier
                 $fichier = md5(uniqid()).'.'.$doc->guessExtension();
 
-                // On copie le fichier dans le dossier uploads
                 $doc->move(
                     $this->getParameter('doc_directory'),
                     $fichier
                 );
 
-                // On crée l'image dans la base de données
                 $document = new Doc();
                 $document->setDocument($fichier);
                 $project->addDoc($document);
             }
 
-            $entityManager->persist($project);
-            foreach ($form->get('images') as $formChild) {
-                $image = new Image;
-
-                $uploadedImages = $formChild->get('name')->getData();
+            $i = 0;
+            foreach ($project->getImages() as $image) {
+                $uploadedImages = $form->get('images')[$i]->get('name')->getData();
+                ++$i;
                 $uploadedImage = $uploadedImages[0];
                 $newFileName = $this->handleFile($slugger, $uploadedImage);
                 $image->setName($newFileName);
-                $image->setProject($project);
-                $entityManager->persist($image);
             }
 
+            $entityManager->persist($project);
             $entityManager->flush();
 
             return $this->redirectToRoute('project_index');
@@ -110,7 +99,7 @@ class ProjectController extends AbstractController
         try {
             $image->move($this->getParameter('image_directory'), $newFileName);
         } catch (FileException $fe) {
-            //throw $th;
+            throw new \Exception("erreur");
         }
 
         return $newFileName;
@@ -139,18 +128,14 @@ class ProjectController extends AbstractController
 
             $images = $form->get('screens')->getData();
 
-            // On boucle sur les images
             foreach($images as $image){
-                // On génère un nouveau nom de fichier
                 $fichier = md5(uniqid()).'.'.$image->guessExtension();
 
-                // On copie le fichier dans le dossier uploads
                 $image->move(
                     $this->getParameter('screen_directory'),
                     $fichier
                 );
 
-                // On crée l'image dans la base de données
                 $img = new Screen();
                 $img->setImage($fichier);
                 $project->addScreen($img);
@@ -158,18 +143,14 @@ class ProjectController extends AbstractController
 
             $docs = $form->get('docs')->getData();
 
-            // On boucle sur les images
             foreach($docs as $doc){
-                // On génère un nouveau nom de fichier
                 $fichier = md5(uniqid()).'.'.$doc->guessExtension();
 
-                // On copie le fichier dans le dossier uploads
                 $doc->move(
                     $this->getParameter('doc_directory'),
                     $fichier
                 );
 
-                // On crée l'image dans la base de données
                 $document = new Doc();
                 $document->setDocument($fichier);
                 $project->addDoc($document);
